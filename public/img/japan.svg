@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1430"/>
+      <stop offset="0.62" stop-color="#28365f"/>
+      <stop offset="1" stop-color="#3a4a75"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd98c"/>
+      <stop offset="0.55" stop-color="#eab04a"/>
+      <stop offset="1" stop-color="#eab04a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="600" fill="url(#sky)"/>
+  <circle cx="455" cy="235" r="190" fill="url(#sun)" opacity="0.55"/>
+  <circle cx="455" cy="235" r="104" fill="#f4be63"/>
+  <path d="M0 380 Q150 300 320 368 T900 356 V600 H0 Z" fill="#101a38" opacity="0.85"/>
+  <path d="M0 430 Q220 366 420 424 T900 420 V600 H0 Z" fill="#0b1226"/>
+  <rect y="470" width="900" height="130" fill="#070d1d"/>
+  <rect x="60" y="452" width="780" height="8" fill="#16224a" opacity="0.8"/>
+  <g fill="#060b18">
+    <rect x="352" y="306" width="26" height="210"/>
+    <rect x="524" y="306" width="26" height="210"/>
+    <rect x="340" y="418" width="222" height="16"/>
+    <rect x="328" y="292" width="246" height="20"/>
+    <path d="M292 262 Q451 214 610 262 L596 288 Q451 246 306 288 Z"/>
+    <rect x="443" y="262" width="16" height="34"/>
+    <path d="M352 306 h198 v10 h-198 Z" opacity="0.001"/>
+  </g>
+  <g fill="#060b18">
+    <rect x="120" y="420" width="14" height="88"/>
+    <rect x="200" y="420" width="14" height="88"/>
+    <rect x="112" y="438" width="110" height="10"/>
+    <path d="M92 400 Q167 376 242 400 L234 416 Q167 396 100 416 Z"/>
+  </g>
+  <rect x="180" y="340" width="540" height="60" fill="url(#haze)" opacity="0.5"/>
+  <g stroke="#d8e2ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5">
+    <path d="M150 200 q10 -10 20 0 q10 -10 20 0"/>
+    <path d="M215 160 q8 -8 16 0 q8 -8 16 0"/>
+    <path d="M700 180 q9 -9 18 0 q9 -9 18 0"/>
+  </g>
+</svg>

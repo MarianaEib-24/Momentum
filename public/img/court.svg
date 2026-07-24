@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1226"/>
+      <stop offset="1" stop-color="#14234a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.7" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#f0b23e" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#f0b23e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ball" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7a444"/>
+      <stop offset="1" stop-color="#d95f16"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c98a3d" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#c98a3d" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="600" fill="url(#bg)"/>
+  <rect width="900" height="600" fill="url(#glow)"/>
+  <rect x="90" y="80" width="720" height="440" fill="url(#wood)"/>
+  <g fill="none" stroke="#e7b058" stroke-opacity="0.55" stroke-width="4" stroke-linejoin="round">
+    <rect x="90" y="80" width="720" height="440" rx="4"/>
+    <line x1="450" y1="80" x2="450" y2="520"/>
+    <circle cx="450" cy="300" r="84"/>
+    <path d="M90 214 h150 a86 86 0 0 1 0 172 h-150"/>
+    <path d="M810 214 h-150 a86 86 0 0 0 0 172 h150"/>
+  </g>
+  <circle cx="450" cy="300" r="12" fill="#e7b058" fill-opacity="0.4"/>
+  <ellipse cx="660" cy="540" rx="86" ry="12" fill="#000" opacity="0.35"/>
+  <circle cx="655" cy="435" r="62" fill="url(#ball)"/>
+  <g fill="none" stroke="#7a2d08" stroke-width="4" opacity="0.75">
+    <path d="M655 373 v124"/>
+    <path d="M598 435 h114"/>
+    <path d="M623 384 q-18 51 0 102"/>
+    <path d="M687 384 q18 51 0 102"/>
+  </g>
+  <circle cx="635" cy="412" r="16" fill="#ffd9a8" opacity="0.25"/>
+</svg>
