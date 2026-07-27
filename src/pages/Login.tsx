@@ -55,21 +55,44 @@ export default function Login() {
             <h1 className="text-[30px] sm:text-[34px] font-bold tracking-tight leading-[1.12]">Two partners.<br />One operating system.</h1>
             <p className="mt-3 text-[14px] leading-relaxed text-[#8d99b5]">Sign in to your shared workspace — projects, habits, goals and dreams, kept perfectly in sync.</p>
 
-            <div className="mt-7 grid grid-cols-2 gap-2.5">
-              {users.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => setEmail(u.email)}
-                  className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left transition-all cursor-pointer ${email === u.email ? 'border-[#4d84ff] bg-[#4d84ff]/12 shadow-[0_0_0_3px_rgba(77,132,255,.15)]' : 'border-white/10 bg-white/[.04] hover:bg-white/[.07]'}`}
-                >
-                  <Avatar user={u} size={34} />
-                  <span className="min-w-0">
-                    <span className="block text-[13px] font-semibold truncate">{u.name.split(' ')[0]}</span>
-                    <span className="block text-[10.5px] text-[#8d99b5] truncate">{u.role.split('·')[1]}</span>
-                  </span>
-                  {email === u.email && <span className="ml-auto h-2 w-2 rounded-full bg-[#4d84ff] shrink-0" />}
+            <div className="mt-7 rounded-3xl border border-[#4d84ff]/20 bg-[#ffffff0d] p-4 text-[13px] text-[#d2dbff]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold">Need your own workspace?</p>
+                  <p className="text-[#aab8e4] text-[12.5px] mt-1">Create a server-backed account and keep your workspace beyond the demo data.</p>
+                </div>
+                <button type="button" onClick={() => { setMode('register'); setErr(''); }}
+                  className="inline-flex items-center justify-center rounded-full border border-[#4d84ff] bg-[#4d84ff]/90 px-5 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#6c9cff]">
+                  Create a new account
                 </button>
-              ))}
+              </div>
+            </div>
+
+            {mode === 'login' && (
+              <div className="mt-5 grid grid-cols-2 gap-2.5">
+                {users.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => setEmail(u.email)}
+                    className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left transition-all cursor-pointer ${email === u.email ? 'border-[#4d84ff] bg-[#4d84ff]/12 shadow-[0_0_0_3px_rgba(77,132,255,.15)]' : 'border-white/10 bg-white/[.04] hover:bg-white/[.07]'}`}
+                  >
+                    <Avatar user={u} size={34} />
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-semibold truncate">{u.name.split(' ')[0]}</span>
+                      <span className="block text-[10.5px] text-[#8d99b5] truncate">{u.role.split('·')[1]}</span>
+                    </span>
+                    {email === u.email && <span className="ml-auto h-2 w-2 rounded-full bg-[#4d84ff] shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-[#4d84ff]/20 bg-[#ffffff0d] p-4 text-[13px] text-[#d2dbff]">
+              <p>{mode === 'login' ? 'New here? Create your own account to store your workspace on the server.' : 'Already have an account? Sign in and continue where you left off.'}</p>
+              <button type="button" onClick={() => { setMode((m) => (m === 'login' ? 'register' : 'login')); setErr(''); }}
+                className="rounded-full border border-[#4d84ff] bg-[#4d84ff]/10 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#4d84ff]/20">
+                {mode === 'login' ? 'Create a new account' : 'Back to sign in'}
+              </button>
             </div>
 
             <form onSubmit={submit} className="mt-5 space-y-3">
