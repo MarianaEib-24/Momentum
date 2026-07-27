@@ -62,6 +62,9 @@ export function seedData(): AppData {
         id: 'pj1', name: 'Forge OS — MVP Build', tag: 'PRODUCT', color: 'blue', icon: 'rocket',
         desc: 'Our flagship SaaS. Private beta to 50 design partners, then public launch.',
         status: 'on-track',
+        visibility: 'team',
+        ownerId: 'alex',
+        members: ['jordan'],
         milestones: [
           { id: 'ms1', title: 'Alpha demo', date: shiftDays(-21), done: true },
           { id: 'ms2', title: 'Private beta — 50 partners', date: shiftDays(9), done: false },
@@ -73,6 +76,9 @@ export function seedData(): AppData {
         id: 'pj2', name: 'Seed Fundraise', tag: 'FINANCE', color: 'gold', icon: 'wallet',
         desc: 'Raise $1.8M seed. Target close before the public launch window.',
         status: 'on-track',
+        visibility: 'team',
+        ownerId: 'alex',
+        members: ['jordan'],
         milestones: [
           { id: 'ms5', title: 'Deck v3 final', date: shiftDays(-8), done: true },
           { id: 'ms6', title: 'First 10 partner meetings', date: shiftDays(4), done: false },
@@ -83,6 +89,9 @@ export function seedData(): AppData {
         id: 'pj3', name: 'Sunset Hoops League', tag: 'BASKETBALL', color: 'orange', icon: 'trophy',
         desc: 'Tuesday night run. Win the summer 5v5 league — conditioning + film.',
         status: 'on-track',
+        visibility: 'team',
+        ownerId: 'alex',
+        members: ['jordan'],
         milestones: [
           { id: 'ms8', title: 'Roster locked (7)', date: shiftDays(-12), done: true },
           { id: 'ms9', title: 'Midseason — top 4 seed', date: shiftDays(11), done: false },
@@ -93,6 +102,9 @@ export function seedData(): AppData {
         id: 'pj4', name: 'GT3 Touring Fund', tag: 'CARS', color: 'rose', icon: 'car',
         desc: 'Structured fund toward the 992 GT3 Touring. Invest monthly, no impulse.',
         status: 'paused',
+        visibility: 'personal',
+        ownerId: 'alex',
+        members: [],
         milestones: [
           { id: 'ms11', title: '$40k parked', date: shiftDays(-30), done: true },
           { id: 'ms12', title: '$120k — 50% mark', date: shiftDays(64), done: false },
@@ -103,6 +115,9 @@ export function seedData(): AppData {
         id: 'pj5', name: 'Kyoto & Amalfi Escape', tag: 'TRAVEL', color: 'emerald', icon: 'plane',
         desc: 'Three weeks off-grid after launch: one week Kyoto, two on the coast.',
         status: 'on-track',
+        visibility: 'personal',
+        ownerId: 'alex',
+        members: [],
         milestones: [
           { id: 'ms14', title: 'Flights booked', date: shiftDays(-4), done: true },
           { id: 'ms15', title: 'Ryokan + cliff hotel', date: shiftDays(16), done: false },
@@ -113,6 +128,9 @@ export function seedData(): AppData {
         id: 'pj6', name: 'Skyline Residence Search', tag: 'HOMEBASE', color: 'navy', icon: 'building',
         desc: 'Find the corner unit with the skyline view. Pre-approval first, then tour.',
         status: 'at-risk',
+        visibility: 'team',
+        ownerId: 'alex',
+        members: ['jordan'],
         milestones: [
           { id: 'ms17', title: 'Mortgage pre-approval', date: shiftDays(-15), done: true },
           { id: 'ms18', title: 'Shortlist 5 buildings', date: shiftDays(2), done: false },
@@ -123,21 +141,25 @@ export function seedData(): AppData {
 
     tasks: [
       // Forge OS
-      T({ projectId: 'pj1', title: 'Onboarding flow v2 — 3 steps, skippable', status: 'active', priority: 'urgent', tags: ['ux', 'growth'], assignee: 'alex', due: 2, pinned: true,
+      T({
+        projectId: 'pj1', title: 'Onboarding flow v2 — 3 steps, skippable', status: 'active', priority: 'urgent', tags: ['ux', 'growth'], assignee: 'alex', due: 2, pinned: true,
         subs: [['Empty-state illustrations', true], ['Progress stepper', true], ['Invite-partner step', false], ['A/B headline copy', false]],
         comments: [['jordan', 'New stepper feels Linear-grade. @Alex Ship it behind the flag.', 5], ['alex', 'Agreed — flag is live for beta cohort B.', 3]],
         reactions: [['flame', ['jordan']], ['target', ['jordan', 'alex']]],
         attachments: [['onboarding-v2.fig', '2.4 MB']],
       }),
-      T({ projectId: 'pj1', title: 'Realtime sync engine — CRDT layer', status: 'active', priority: 'high', tags: ['infra'], assignee: 'jordan', due: 4,
+      T({
+        projectId: 'pj1', title: 'Realtime sync engine — CRDT layer', status: 'active', priority: 'high', tags: ['infra'], assignee: 'jordan', due: 4,
         subs: [['Presence cursors', true], ['Conflict resolution', true], ['Reconnect queue', false]],
         comments: [['jordan', 'CRDT merge is finally deterministic. Latency p95 at 41ms.', 9]],
         reactions: [['thumbs', ['alex']]],
       }),
-      T({ projectId: 'pj1', title: 'Pricing page + Stripe checkout', status: 'todo', priority: 'high', tags: ['billing', 'web'], assignee: 'both', due: 8,
+      T({
+        projectId: 'pj1', title: 'Pricing page + Stripe checkout', status: 'todo', priority: 'high', tags: ['billing', 'web'], assignee: 'both', due: 8,
         subs: [['Annual toggle', false], ['Founding-partner plan', false], ['Tax config', false]],
       }),
-      T({ projectId: 'pj1', title: 'Beta interview notes → insight doc', status: 'review', priority: 'medium', tags: ['research'], assignee: 'jordan', due: 1,
+      T({
+        projectId: 'pj1', title: 'Beta interview notes → insight doc', status: 'review', priority: 'medium', tags: ['research'], assignee: 'jordan', due: 1,
         comments: [['alex', 'Tag the churn-risk quotes separately, they feed the deck.', 26]],
         attachments: [['beta-insights.md', '38 KB']],
       }),
@@ -145,46 +167,54 @@ export function seedData(): AppData {
       T({ projectId: 'pj1', title: 'Status page + uptime alerts', status: 'done', priority: 'low', tags: ['infra'], assignee: 'jordan', doneAgo: 4 }),
       // Fundraise
       T({ projectId: 'pj2', title: 'Warm intro map — 40 angels / 12 funds', status: 'done', priority: 'high', tags: ['outreach'], assignee: 'jordan', doneAgo: 2 }),
-      T({ projectId: 'pj2', title: 'Data room: metrics, cap table, M-1 P&L', status: 'active', priority: 'urgent', tags: ['diligence'], assignee: 'jordan', due: 3, pinned: true,
+      T({
+        projectId: 'pj2', title: 'Data room: metrics, cap table, M-1 P&L', status: 'active', priority: 'urgent', tags: ['diligence'], assignee: 'jordan', due: 3, pinned: true,
         subs: [['Metrics dashboard export', true], ['Cap table v-final', true], ['M-1 P&L review', false], ['Founder refs', false]],
         comments: [['alex', 'Asked our accountant for the reviewed P&L — ETA Thursday.', 7]],
         reactions: [['target', ['alex']]],
         attachments: [['dataroom-index.pdf', '112 KB']],
       }),
-      T({ projectId: 'pj2', title: 'Financial model — 24-month runway plan', status: 'active', priority: 'high', tags: ['model'], assignee: 'both', due: 5,
+      T({
+        projectId: 'pj2', title: 'Financial model — 24-month runway plan', status: 'active', priority: 'high', tags: ['model'], assignee: 'both', due: 5,
         comments: [['jordan', 'Base case now shows default-alive at 55k MRR. @Alex check hiring rows.', 14]],
         reactions: [['bulb', ['alex']]],
       }),
       T({ projectId: 'pj2', title: 'Partner pitch rehearsal ×5', status: 'todo', priority: 'medium', tags: ['pitch'], assignee: 'both', due: 6 }),
       T({ projectId: 'pj2', title: 'Update deck: add cohort retention slide', status: 'review', priority: 'medium', tags: ['deck'], assignee: 'alex', due: 2 }),
       // Hoops
-      T({ projectId: 'pj3', title: 'Film session — pick-and-roll coverage', status: 'todo', priority: 'medium', tags: ['film'], assignee: 'both', due: 3,
+      T({
+        projectId: 'pj3', title: 'Film session — pick-and-roll coverage', status: 'todo', priority: 'medium', tags: ['film'], assignee: 'both', due: 3,
         comments: [['jordan', 'Their 4 can’t switch. Force the short roll every time.', 18]],
         reactions: [['flame', ['alex']]],
       }),
-      T({ projectId: 'pj3', title: 'Conditioning block — 6am track ×3/wk', status: 'active', priority: 'high', tags: ['fitness'], assignee: 'both', due: 1,
+      T({
+        projectId: 'pj3', title: 'Conditioning block — 6am track ×3/wk', status: 'active', priority: 'high', tags: ['fitness'], assignee: 'both', due: 1,
         subs: [['400m repeats', true], ['Lateral slides', true], ['Free throws ×50', false]],
       }),
       T({ projectId: 'pj3', title: 'New uniforms — navy/gold mockups', status: 'done', priority: 'low', tags: ['gear'], assignee: 'alex', doneAgo: 3, reactions: [['heart', ['jordan']]] }),
       T({ projectId: 'pj3', title: 'Playbook: horns + elbow actions', status: 'todo', priority: 'low', tags: ['strategy'], assignee: 'jordan', due: 10 }),
       // GT3
-      T({ projectId: 'pj4', title: 'Auto-invest $6,500/mo into index sleeve', status: 'active', priority: 'high', tags: ['investing'], assignee: 'jordan', due: 12,
+      T({
+        projectId: 'pj4', title: 'Auto-invest $6,500/mo into index sleeve', status: 'active', priority: 'high', tags: ['investing'], assignee: 'jordan', due: 12,
         comments: [['jordan', 'Set the recurring transfer — boring is the strategy.', 30]],
       }),
       T({ projectId: 'pj4', title: 'Compare allocations: Touring vs Spyder RS', status: 'todo', priority: 'low', tags: ['research'], assignee: 'alex', due: 40 }),
       T({ projectId: 'pj4', title: 'Track day: Laguna Seca waitlist', status: 'done', priority: 'medium', tags: ['experience'], assignee: 'both', doneAgo: 6, reactions: [['flame', ['alex', 'jordan']]] }),
       // Travel
-      T({ projectId: 'pj5', title: 'Kyoto: 4-day temple + food crawl route', status: 'active', priority: 'medium', tags: ['itinerary'], assignee: 'alex', due: 14,
+      T({
+        projectId: 'pj5', title: 'Kyoto: 4-day temple + food crawl route', status: 'active', priority: 'medium', tags: ['itinerary'], assignee: 'alex', due: 14,
         subs: [['Fushimi Inari at dawn', true], ['Nishiki market lunch', false], ['Arashiyama bikes', false]],
         reactions: [['bulb', ['jordan']]],
       }),
-      T({ projectId: 'pj5', title: 'Book cliffside hotel — Positano 7 nights', status: 'todo', priority: 'high', tags: ['booking'], assignee: 'jordan', due: 9,
+      T({
+        projectId: 'pj5', title: 'Book cliffside hotel — Positano 7 nights', status: 'todo', priority: 'high', tags: ['booking'], assignee: 'jordan', due: 9,
         comments: [['alex', 'The one with the infinity pool. Non-negotiable.', 22]],
       }),
       T({ projectId: 'pj5', title: 'Offline handoff doc for the beta cohort', status: 'todo', priority: 'medium', tags: ['ops'], assignee: 'both', due: 80 }),
       T({ projectId: 'pj5', title: 'JRE rail passes + pocket wifi', status: 'done', priority: 'low', tags: ['logistics'], assignee: 'jordan', doneAgo: 2 }),
       // Residence
-      T({ projectId: 'pj6', title: 'Tour: Meridian Tower unit 34B — skyline corner', status: 'active', priority: 'urgent', tags: ['tour'], assignee: 'both', due: 2, pinned: true,
+      T({
+        projectId: 'pj6', title: 'Tour: Meridian Tower unit 34B — skyline corner', status: 'active', priority: 'urgent', tags: ['tour'], assignee: 'both', due: 2, pinned: true,
         comments: [['alex', 'Agent sent the floor plan. Corner glazing faces east — sunrise desk spot.', 8]],
         reactions: [['target', ['alex', 'jordan']], ['flame', ['jordan']]],
         attachments: [['34B-floorplan.pdf', '860 KB']],

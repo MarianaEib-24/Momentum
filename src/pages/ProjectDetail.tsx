@@ -10,7 +10,7 @@ import { Avatar, Btn, Chip, Empty, Modal, Progress, DuoAvatars, FadeIn, inputCls
 import { Ring } from '../components/charts';
 import { Ico, IconTile, pal, PALETTE } from '../components/Icon';
 import { Md } from '../components/Markdown';
-import { daysUntil, fmtSize, nowIso, pretty, relTime, todayStr, uid } from '../lib/utils';
+import { daysUntil, fmtSize, nowIso, pretty, relTime, todayStr, uid, projectIsVisible } from '../lib/utils';
 import type { Assignee, Priority, ReactionKey, Task, TaskStatus } from '../lib/types';
 import type { LucideIcon } from 'lucide-react';
 import { Flame, ThumbsUp, Lightbulb, Target, Heart } from 'lucide-react';
@@ -37,7 +37,7 @@ const REACTIONS: { k: ReactionKey; icon: LucideIcon }[] = [
 export default function ProjectDetail() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, update, toast } = useStore();
+  const { data, update, toast, me } = useStore();
   const project = data.projects.find((p) => p.id === id);
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
@@ -45,14 +45,15 @@ export default function ProjectDetail() {
   const dragId = useRef<string | null>(null);
   const [overCol, setOverCol] = useState<TaskStatus | null>(null);
 
-  const tasks = useMemo(() => data.tasks.filter((t) => t.projectId === id), [data.tasks, id]);
-
-  if (!project) {
+  if (!project || !projectIsVisible(project, me)) {
     return <Card404 onBack={() => nav('/projects')} />;
   }
 
+  const tasks = useMemo(() => data.tasks.filter((t) => t.projectId === id), [data.tasks, id]);
+
   const p = pal(project.color);
   const done = tasks.filter((t) => t.status === 'done').length;
+  const collaborators = project.members.map((userId) => data.users[userId]).filter(Boolean);
   const v = tasks.length ? done / tasks.length : 0;
   const pinned = tasks.filter((t) => t.pinned && t.status !== 'done');
   const msDone = project.milestones.filter((m) => m.done).length;
@@ -116,10 +117,78 @@ export default function ProjectDetail() {
                 <p><span className="font-bold text-ink">{tasks.length - done}</span> open tasks</p>
                 <p><span className="font-bold text-ink">{done}</span> completed</p>
                 <p><span className="font-bold text-ink">{msDone}/{project.milestones.length}</span> milestones</p>
-                <div className="pt-1"><DuoAvatars users={Object.values(data.users)} size={22} /></div>
+                <div className="pt-1"><DuoAvatars users={collaborators.length > 0 ? collaborators : [data.users[project.ownerId]]} size={22} /></div>
               </div>
             </div>
           </div>
+          <div className="mt-5 flex items-center gap-2 flex-wrap">
+            <div className="rounded-2xl border border-line bg-surface px-3 py-2 text-[11px] font-semibold text-mut">
+              {project.visibility === 'team' ? 'Shared project' : 'Personal project'}
+            </div>
+            <div className="rounded-2xl border border-line bg-surface px-3 py-2 text-[11px] font-semibold text-mut">
+              Owner: {data.users[project.ownerId]?.name ?? 'Unknown'}
+            </div>
+            {project.visibility === 'team' && (
+              <div className="rounded-2xl border border-line bg-surface px-3 py-2 text-[11px] font-semibold text-mut">
+                {collaborators.length} collaborator{collaborators.length === 1 ? '' : 's'}
+              </div>
+            )}
+          </div>
+          {me === project.ownerId && (
+            <div className="mt-5 rounded-2xl border border-line bg-surface p-5">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-[14px] font-semibold tracking-tight">Project access</h2>
+                  <p className="text-[12px] text-mut">Manage visibility and team members for this project.</p>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-line bg-elev p-4">
+                  <p className="text-[12px] text-mut mb-3">Visibility</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => update((d) => { const pr = d.projects.find((x) => x.id === project.id); if (pr) { pr.visibility = 'personal'; pr.members = []; } }, { action: 'updated visibility of', target: project.name })}
+                      className={`rounded-2xl border px-4 py-2 text-[12px] font-semibold transition-all ${project.visibility === 'personal' ? 'border-accent bg-accent/[.08]' : 'border-line bg-surface hover:border-white/20'}`}>
+                      Personal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => update((d) => { const pr = d.projects.find((x) => x.id === project.id); if (pr) pr.visibility = 'team'; }, { action: 'updated visibility of', target: project.name })}
+                      className={`rounded-2xl border px-4 py-2 text-[12px] font-semibold transition-all ${project.visibility === 'team' ? 'border-accent bg-accent/[.08]' : 'border-line bg-surface hover:border-white/20'}`}>
+                      Shared
+                    </button>
+                  </div>
+                </div>
+                {project.visibility === 'team' && (
+                  <div className="rounded-2xl border border-line bg-elev p-4">
+                    <p className="text-[12px] text-mut mb-3">Collaborators</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.values(data.users).filter((u) => u.id !== project.ownerId).map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => update((d) => {
+                            const pr = d.projects.find((x) => x.id === project.id);
+                            if (!pr) return;
+                            if (pr.members.includes(user.id)) {
+                              pr.members = pr.members.filter((id) => id !== user.id);
+                            } else {
+                              pr.members.push(user.id);
+                            }
+                          }, { action: 'updated collaborators for', target: project.name })}
+                          className={`rounded-2xl border p-3 text-left transition-all ${project.members.includes(user.id) ? 'border-accent bg-accent/[.08]' : 'border-line bg-surface hover:border-white/20'}`}>
+                          <p className="font-semibold">{user.name}</p>
+                          <p className="text-[11px] text-mut mt-1">{user.role}</p>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-mut mt-3">Selected collaborators can access this project.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           <div className="mt-5 flex items-center gap-2 flex-wrap">
             <select
               value={project.status}
@@ -316,7 +385,7 @@ function TaskModal({ taskId, onClose }: { taskId: string | null; onClose: () => 
   const users = Object.values(data.users);
   const task_ = task;
 
-  if (!task_ ) {
+  if (!task_) {
     return <Modal open={!!taskId} onClose={onClose} title="">{null}</Modal>;
   }
 

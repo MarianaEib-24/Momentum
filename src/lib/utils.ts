@@ -1,3 +1,5 @@
+import type { Project, Task } from './types';
+
 export const pad = (n: number) => String(n).padStart(2, '0');
 export const uid = () => `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 export const fmtDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -41,10 +43,25 @@ export const recentWeekday = (wd: number) => {
 export const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
 export const pct = (a: number, b: number) => (b <= 0 ? 0 : Math.round((a / b) * 100));
 
+export const projectIsVisible = (project: Project, me: string | null) => {
+  if (!me) return false;
+  const members = Array.isArray(project.members) ? project.members : [];
+  if (project.visibility === 'team') return project.ownerId === me || members.includes(me);
+  return project.ownerId === me;
+};
+
+export const getVisibleProjects = (projects: Project[], me: string | null) =>
+  projects.filter((project) => projectIsVisible(project, me));
+
+export const getVisibleTasks = (tasks: Task[], projects: Project[], me: string | null) => {
+  const visibleProjectIds = new Set(getVisibleProjects(projects, me).map((project) => project.id));
+  return tasks.filter((task) => visibleProjectIds.has(task.projectId));
+};
+
 export function habitStreak(days: Record<string, 1>): number {
   let s = 0;
   let cursor = days[todayStr()] ? 0 : -1;
-  for (;;) {
+  for (; ;) {
     const key = shiftDays(cursor);
     if (days[key]) { s++; cursor--; } else break;
   }

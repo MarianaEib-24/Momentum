@@ -10,7 +10,7 @@ import { useStore } from '../lib/store';
 import { Avatar } from './ui';
 import { Ico, pal } from './Icon';
 import { Confetti } from './Confetti';
-import { relTime } from '../lib/utils';
+import { relTime, getVisibleProjects, getVisibleTasks } from '../lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
 export const NAV: { section: string; items: { to: string; label: string; icon: LucideIcon }[] }[] = [
@@ -89,7 +89,7 @@ function Presence() {
   useEffect(() => {
     const id = window.setInterval(() => setI((v) => (v + 1) % states.length), 22000);
     return () => window.clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   if (!partner) return null;
   const online = states[i] !== 'Active 4m ago';
@@ -109,7 +109,7 @@ function Presence() {
 }
 
 function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { data } = useStore();
+  const { data, me } = useStore();
   const [q, setQ] = useState('');
   const [idx, setIdx] = useState(0);
   const nav = useNavigate();
@@ -126,12 +126,14 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
       group: 'Go to', label: p.label, sub: 'Page', to: p.to, run: () => nav(p.to),
       icon: <p.icon size={16} className="text-mut" />,
     }));
-    const projects = data.projects.filter((p) => match(p.name)).map((p) => ({
+    const visibleProjects = getVisibleProjects(data.projects, me);
+    const visibleTasks = getVisibleTasks(data.tasks, visibleProjects, me);
+    const projects = visibleProjects.filter((p) => match(p.name)).map((p) => ({
       group: 'Projects', label: p.name, sub: p.tag, to: `/projects/${p.id}`,
       icon: <Ico name={p.icon} size={15} className="" />, hex: pal(p.color).hex, run: () => nav(`/projects/${p.id}`),
     }));
-    const tasks = data.tasks.filter((t) => t.status !== 'done' && match(t.title)).slice(0, 6).map((t) => ({
-      group: 'Open tasks', label: t.title, sub: data.projects.find((p) => p.id === t.projectId)?.name ?? '', to: `/projects/${t.projectId}`,
+    const tasks = visibleTasks.filter((t) => t.status !== 'done' && match(t.title)).slice(0, 6).map((t) => ({
+      group: 'Open tasks', label: t.title, sub: visibleProjects.find((p) => p.id === t.projectId)?.name ?? '', to: `/projects/${t.projectId}`,
       icon: <Check size={15} className="text-mut" />, run: () => nav(`/projects/${t.projectId}`),
     }));
     return [...projects, ...tasks, ...pages].slice(0, 12);

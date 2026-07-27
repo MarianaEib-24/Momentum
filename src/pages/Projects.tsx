@@ -5,7 +5,7 @@ import { useStore } from '../lib/store';
 import { Card, Chip, DuoAvatars, Empty, FadeIn, Field, Modal, Btn, inputCls } from '../components/ui';
 import { Ring } from '../components/charts';
 import { Ico, IconTile, pal, PALETTE, ICONS } from '../components/Icon';
-import { daysUntil, pretty, uid } from '../lib/utils';
+import { daysUntil, pretty, uid, getVisibleProjects, getVisibleTasks } from '../lib/utils';
 import type { Project } from '../lib/types';
 
 const STATUS_TABS = [
@@ -17,7 +17,7 @@ const STATUS_TABS = [
 ] as const;
 
 export default function Projects() {
-  const { data, update, toast } = useStore();
+  const { data, me, update, toast } = useStore();
   const nav = useNavigate();
   const [tab, setTab] = useState<string>('all');
   const [q, setQ] = useState('');
@@ -28,25 +28,35 @@ export default function Projects() {
   const [desc, setDesc] = useState('');
   const [color, setColor] = useState('blue');
   const [icon, setIcon] = useState('rocket');
+  const [visibility, setVisibility] = useState<'personal' | 'team'>('personal');
+  const [members, setMembers] = useState<string[]>([]);
 
-  const filtered = useMemo(() => data.projects.filter((p) => {
+  const visibleProjects = useMemo(() => getVisibleProjects(data.projects, me), [data.projects, me]);
+  const visibleTasks = useMemo(() => getVisibleTasks(data.tasks, visibleProjects, me), [data.tasks, visibleProjects, me]);
+
+  const filtered = useMemo(() => visibleProjects.filter((p) => {
     if (tab !== 'all' && p.status !== tab) return false;
     if (q && !(`${p.name} ${p.tag} ${p.desc}`).toLowerCase().includes(q.toLowerCase())) return false;
     return true;
-  }), [data.projects, tab, q]);
+  }), [visibleProjects, tab, q]);
 
   const createProject = () => {
     if (!name.trim()) return;
     const id = `pj${uid()}`;
+    const currentUser = me ?? 'alex';
     update((d) => {
       d.projects.unshift({
         id, name: name.trim(), tag: tag.trim().toUpperCase() || 'NEW', color, icon,
         desc: desc.trim() || 'A brand new chapter.', status: 'on-track',
+        visibility,
+        ownerId: currentUser,
+        members: visibility === 'team' ? members : [],
         milestones: [{ id: `ms${uid()}`, title: 'Kickoff', date: new Date().toISOString().slice(0, 10), done: false }],
       });
     }, { action: 'created project', target: name.trim() });
     toast('Project created', icon);
-    setCreateOpen(false); setName(''); setTag(''); setDesc('');
+    setCreateOpen(false);
+    setName(''); setTag(''); setDesc(''); setVisibility('personal'); setMembers([]);
     nav(`/projects/${id}`);
   };
 
@@ -55,7 +65,7 @@ export default function Projects() {
       <FadeIn className="flex flex-wrap items-center gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight">Projects</h1>
-          <p className="text-[12.5px] text-mut mt-0.5">{data.projects.filter((p) => p.status === 'on-track').length} on track · {data.projects.length} total — shared with {Object.values(data.users).map((u) => u.name.split(' ')[0]).join(' & ')}</p>
+          <p className="text-[12.5px] text-mut mt-0.5">{visibleProjects.filter((p) => p.status === 'on-track').length} on track · {visibleProjects.length} total</p>
         </div>
         <div className="ms-auto flex items-center gap-2.5">
           <div className="relative">
@@ -163,6 +173,42 @@ export default function Projects() {
               ))}
             </div>
           </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setVisibility('personal');
+                setMembers([]);
+              }}
+              className={`rounded-3xl border p-3 text-left text-[13px] transition-all ${visibility === 'personal' ? 'border-accent bg-accent/[.08]' : 'border-line bg-surface hover:border-white/20'}`}>
+              <p className="font-semibold">Personal project</p>
+              <p className="text-[12px] text-mut mt-1">Only you can see and edit this project.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setVisibility('team')}
+              className={`rounded-3xl border p-3 text-left text-[13px] transition-all ${visibility === 'team' ? 'border-accent bg-accent/[.08]' : 'border-line bg-surface hover:border-white/20'}`}>
+              <p className="font-semibold">Shared project</p>
+              <p className="text-[12px] text-mut mt-1">Invite collaborators to work together on this project.</p>
+            </button>
+          </div>
+          {visibility === 'team' && (
+            <Field label="Collaborators">
+              <div className="grid grid-cols-2 gap-2">
+                {Object.values(data.users).filter((u) => u.id !== (me ?? 'alex')).map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => setMembers((current) => current.includes(user.id) ? current.filter((id) => id !== user.id) : [...current, user.id])}
+                    className={`rounded-2xl border px-3 py-2 text-left transition-all ${members.includes(user.id) ? 'border-accent bg-accent/[.08]' : 'border-line bg-surface hover:border-white/20'}`}>
+                    <p className="font-semibold">{user.name.split(' ')[0]}</p>
+                    <p className="text-[11px] text-mut mt-1">{user.role.split(' · ')[1] ?? user.email}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-mut mt-2">Leave collaborators empty for now; you can invite people later.</p>
+            </Field>
+          )}
           <Field label="Description">
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} className={`${inputCls} h-auto! py-2 resize-none`} placeholder="What is this project about?" />
           </Field>

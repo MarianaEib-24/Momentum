@@ -35,6 +35,9 @@ export interface Project {
   id: UID; name: string; tag: string;
   color: string; icon: string; desc: string;
   status: 'on-track' | 'at-risk' | 'paused' | 'done';
+  visibility: 'personal' | 'team';
+  ownerId: UID;
+  members: UID[];
   milestones: Milestone[];
 }
 

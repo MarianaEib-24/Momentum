@@ -8,7 +8,7 @@ import { useStore } from '../lib/store';
 import { Card, SectionTitle, Progress, Avatar, FadeIn, Empty, Toggle, Chip } from '../components/ui';
 import { AreaChart } from '../components/charts';
 import { Ico, IconTile, pal } from '../components/Icon';
-import { greet, habitStreak, lastNDays, pretty, prettyFull, relTime, todayStr, daysUntil, weekDayShort } from '../lib/utils';
+import { greet, habitStreak, lastNDays, pretty, prettyFull, relTime, todayStr, daysUntil, weekDayShort, getVisibleProjects, getVisibleTasks } from '../lib/utils';
 
 const QUOTES = [
   { t: 'We are what we repeatedly do. Excellence is not an act, but a habit.', by: 'Will Durant' },
@@ -24,7 +24,7 @@ const QUOTES = [
 interface Deadline { id: string; title: string; date: string; color: string; icon: string; to: string; kind: string; }
 
 export default function Dashboard() {
-  const { data, meUser, partner, update } = useStore();
+  const { data, meUser, partner, update, me } = useStore();
   const nav = useNavigate();
   const [qi, setQi] = useState(0);
   const [customizing, setCustomizing] = useState(false);
@@ -43,24 +43,28 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     const week = lastNDays(7);
-    const doneThisWeek = data.tasks.filter((t) => t.doneAt && week.includes(t.doneAt)).length;
-    const perDay = week.map((d) => data.tasks.filter((t) => t.doneAt === d).length);
+    const visibleProjects = getVisibleProjects(data.projects, me);
+    const visibleTasks = getVisibleTasks(data.tasks, visibleProjects, me);
+    const doneThisWeek = visibleTasks.filter((t) => t.doneAt && week.includes(t.doneAt)).length;
+    const perDay = week.map((d) => visibleTasks.filter((t) => t.doneAt === d).length);
     const bestStreak = data.habits.reduce((m, h) => Math.max(m, habitStreak(h.days)), 0);
     const deepFocus = data.habits.find((h) => h.name.includes('Deep work'));
     const focusHours = deepFocus ? week.filter((d) => deepFocus.days[d]).length * 2 : 0;
     const goalPct = Math.round(data.goals.reduce((n, g) => n + Math.min(1, g.current / g.target), 0) / Math.max(1, data.goals.length) * 100);
-    const openTasks = data.tasks.filter((t) => t.status !== 'done').length;
+    const openTasks = visibleTasks.filter((t) => t.status !== 'done').length;
     return { week, doneThisWeek, perDay, bestStreak, focusHours, goalPct, openTasks };
-  }, [data]);
+  }, [data, me]);
 
   const deadlines = useMemo<Deadline[]>(() => {
+    const visibleProjects = getVisibleProjects(data.projects, me);
+    const visibleTasks = getVisibleTasks(data.tasks, visibleProjects, me);
     const out: Deadline[] = [];
-    for (const t of data.tasks) {
+    for (const t of visibleTasks) {
       if (t.status === 'done' || !t.due || daysUntil(t.due) < 0 || daysUntil(t.due) > 10) continue;
-      const p = data.projects.find((x) => x.id === t.projectId);
+      const p = visibleProjects.find((x) => x.id === t.projectId);
       out.push({ id: t.id, title: t.title, date: t.due, color: pal(p?.color ?? 'blue').hex, icon: p?.icon ?? 'flag', to: `/projects/${t.projectId}`, kind: 'Task' });
     }
-    for (const p of data.projects) {
+    for (const p of visibleProjects) {
       for (const m of p.milestones) {
         if (m.done || daysUntil(m.date) < 0 || daysUntil(m.date) > 10) continue;
         out.push({ id: m.id, title: `${m.title} — ${p.name}`, date: m.date, color: pal(p.color).hex, icon: 'flag', to: `/projects/${p.id}`, kind: 'Milestone' });
@@ -81,7 +85,7 @@ export default function Dashboard() {
   };
 
   const kpis = [
-    { icon: CheckCircle2, label: 'Completed this week', value: String(stats.doneThisWeek), sub: `${stats.openTasks} open across ${data.projects.length} projects`, hex: pal('blue').hex, soft: pal('blue').soft },
+    { icon: CheckCircle2, label: 'Completed this week', value: String(stats.doneThisWeek), sub: `${stats.openTasks} open across ${getVisibleProjects(data.projects, me).length} projects`, hex: pal('blue').hex, soft: pal('blue').soft },
     { icon: Flame, label: 'Best active streak', value: `${stats.bestStreak} days`, sub: data.habits.find((h) => habitStreak(h.days) === stats.bestStreak)?.name ?? '', hex: pal('orange').hex, soft: pal('orange').soft },
     { icon: Timer, label: 'Focus hours (7d)', value: `${stats.focusHours}h`, sub: 'Deep work blocks logged', hex: pal('violet').hex, soft: pal('violet').soft },
     { icon: Target, label: 'Goals on track', value: `${stats.goalPct}%`, sub: `${data.goals.length} active goals`, hex: pal('emerald').hex, soft: pal('emerald').soft },
