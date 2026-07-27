@@ -13,7 +13,7 @@ const NOTIF_PREFS: { k: string; label: string; sub: string }[] = [
 ];
 
 export default function Settings() {
-  const { data, theme, setTheme, update, toast, resetDemo, importData } = useStore();
+  const { data, theme, setTheme, update, toast, resetWorkspace, importData } = useStore();
   const [wsName, setWsName] = useState(data.workspace.name);
   const [confirmReset, setConfirmReset] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -104,25 +104,25 @@ export default function Settings() {
           <div className="flex flex-wrap gap-2">
             <Btn icon={Download} onClick={exportJson}>Export backup</Btn>
             <Btn variant="ghost" icon={Upload} onClick={() => fileRef.current?.click()}>Import backup</Btn>
-            <Btn variant="danger" icon={RotateCcw} onClick={() => setConfirmReset(true)}>Reset demo data</Btn>
+            <Btn variant="danger" icon={RotateCcw} onClick={() => setConfirmReset(true)}>Reset workspace</Btn>
             <input ref={fileRef} type="file" accept="application/json" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) onImport(f); e.target.value = ''; }} />
           </div>
           <p className="mt-3 text-[11.5px] text-mut leading-relaxed flex items-start gap-1.5">
             <ShieldCheck size={13} className="text-emerald-500 shrink-0 mt-0.5" />
-            Data lives only in this browser (localStorage) — fully offline-friendly, instantly synced between both partners in this demo. Export regularly if you care about it.
+            Your workspace is stored on the server and backed up there. Import/Export is still available for portability.
           </p>
         </Card>
       </FadeIn>
 
       <p className="text-center text-[11px] text-mut/60 pb-4">Momentum v1.0 — crafted for two partners who ship.</p>
 
-      <Modal open={confirmReset} onClose={() => setConfirmReset(false)} title="Reset to demo data?">
+      <Modal open={confirmReset} onClose={() => setConfirmReset(false)} title="Reset workspace?">
         <div className="p-5">
-          <p className="text-[13px] text-mut leading-relaxed">Every task, entry, habit check-in and plan will be replaced with the original demo workspace. Export a backup first if unsure.</p>
+          <p className="text-[13px] text-mut leading-relaxed">This will clear your current workspace and reset it on the server. Export a backup first if unsure.</p>
           <div className="mt-4 flex justify-end gap-2">
             <Btn variant="ghost" onClick={() => setConfirmReset(false)}>Keep my data</Btn>
-            <Btn variant="danger" onClick={() => { setConfirmReset(false); resetDemo(); }}>Reset everything</Btn>
+            <Btn variant="danger" onClick={async () => { setConfirmReset(false); await resetWorkspace(); }}>Reset workspace</Btn>
           </div>
         </div>
       </Modal>
