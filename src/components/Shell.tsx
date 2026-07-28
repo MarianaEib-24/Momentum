@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  LayoutDashboard, Target, Flame, CalendarDays, PenLine, Lightbulb, Telescope,
-  Library, BarChart3, Bell, User as UserIcon, Settings, Search, Moon, Sun,
-  Menu, X, FolderKanban, LogOut, Check, Wifi, WifiOff, ChevronsRight,
-} from 'lucide-react';
+import { LayoutDashboard, Target, Flame, CalendarDays, PenLine, Lightbulb, Telescope, Library, ChartBar as BarChart3, Bell, User as UserIcon, Settings, Search, Moon, Sun, Menu, X, FolderKanban, LogOut, Check, Wifi, WifiOff, ChevronsRight } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { Avatar } from './ui';
 import { Ico, pal } from './Icon';

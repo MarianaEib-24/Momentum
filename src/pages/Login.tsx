@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight, ShieldCheck, Zap, Globe2, Loader2, UserPlus } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Zap, Globe as Globe2, Loader as Loader2, UserPlus } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { Btn } from '../components/ui';
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Mail, CalendarHeart, CheckCircle2, MessageSquare, Flame, Pencil, Check as CheckIcon } from 'lucide-react';
+import { LogOut, Mail, CalendarHeart, CircleCheck as CheckCircle2, MessageSquare, Flame, Pencil, Check as CheckIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../lib/store';
 import { Avatar, Btn, Card, FadeIn, SectionTitle, Chip } from '../components/ui';
