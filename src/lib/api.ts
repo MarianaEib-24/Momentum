@@ -47,6 +47,17 @@ export async function signOutApi(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+export async function resetPasswordApi(email: string): Promise<void> {
+  const redirectTo = window.location.origin;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw new Error(error.message);
+}
+
+export async function updatePasswordApi(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+}
+
 export async function getSessionUser(): Promise<AuthUser | null> {
   const { data } = await supabase.auth.getSession();
   if (!data.session?.user) return null;

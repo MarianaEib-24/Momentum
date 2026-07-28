@@ -81,8 +81,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
     (async () => {
+      const hash = window.location.hash;
+      const isRecovery = /[?&]type=recovery/.test(hash);
       const { data: sessionData } = await supabase.auth.getSession();
       if (!mounted) return;
+      if (isRecovery) {
+        setAuthReady(true);
+        return;
+      }
       if (sessionData.session?.user) {
         const userId = sessionData.session.user.id;
         const email = sessionData.session.user.email ?? '';

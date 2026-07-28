@@ -1,23 +1,41 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight, ShieldCheck, Zap, Globe as Globe2, Loader as Loader2, UserPlus } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Zap, Globe as Globe2, Loader as Loader2, UserPlus, ArrowLeft, MailCheck } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { Btn } from '../components/ui';
+import { resetPasswordApi } from '../lib/api';
+
+type Mode = 'login' | 'register' | 'forgot';
 
 export default function Login() {
   const { login, register } = useStore();
   const nav = useNavigate();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<Mode>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [info, setInfo] = useState('');
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setErr('');
+    setInfo('');
+    if (mode === 'forgot') {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setErr('Enter a valid email address.'); return; }
+      setBusy(true);
+      try {
+        await resetPasswordApi(email.trim());
+        setInfo('Check your inbox — we sent you a password reset link.');
+      } catch (error: any) {
+        setErr(error?.message ?? 'Could not send reset email.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setErr('Enter a valid email address.'); return; }
     if (pass.length < 6) { setErr('Password must be at least 6 characters.'); return; }
     if (mode === 'register' && !name.trim()) { setErr('Enter a display name to register.'); return; }
@@ -36,6 +54,8 @@ export default function Login() {
     }
   };
 
+  const switchMode = (m: Mode) => { setMode(m); setErr(''); setInfo(''); };
+
   return (
     <div className="min-h-screen bg-[#070b14] text-white flex">
       {/* Left — form */}
@@ -50,8 +70,17 @@ export default function Login() {
 
         <div className="relative flex-1 flex items-center">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md mx-auto">
-            <h1 className="text-[30px] sm:text-[34px] font-bold tracking-tight leading-[1.12]">Your workspace.<br />One operating system.</h1>
-            <p className="mt-3 text-[14px] leading-relaxed text-[#8d99b5]">Sign in to your workspace — projects, habits, goals and plans, kept perfectly in sync and saved to your account.</p>
+            {mode === 'forgot' ? (
+              <>
+                <h1 className="text-[30px] sm:text-[34px] font-bold tracking-tight leading-[1.12]">Forgot<br />your password?</h1>
+                <p className="mt-3 text-[14px] leading-relaxed text-[#8d99b5]">Enter the email tied to your account and we'll send you a secure link to set a new password.</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-[30px] sm:text-[34px] font-bold tracking-tight leading-[1.12]">Your workspace.<br />One operating system.</h1>
+                <p className="mt-3 text-[14px] leading-relaxed text-[#8d99b5]">Sign in to your workspace — projects, habits, goals and plans, kept perfectly in sync and saved to your account.</p>
+              </>
+            )}
 
             <form onSubmit={submit} className="mt-8 space-y-3">
               {mode === 'register' && (
@@ -72,27 +101,55 @@ export default function Login() {
                   placeholder="you@example.com"
                 />
               </div>
-              <div className="relative">
-                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#67718c]" />
-                <input
-                  value={pass} onChange={(e) => setPass(e.target.value)} type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                  className="w-full h-12 rounded-xl border border-white/10 bg-white/[.05] pl-10 pr-3 text-[14px] outline-none focus:border-[#4d84ff] focus:ring-2 focus:ring-[#4d84ff]/25 transition placeholder:text-[#5d6880]"
-                  placeholder="Password"
-                />
-              </div>
+              {mode !== 'forgot' && (
+                <div className="relative">
+                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#67718c]" />
+                  <input
+                    value={pass} onChange={(e) => setPass(e.target.value)} type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                    className="w-full h-12 rounded-xl border border-white/10 bg-white/[.05] pl-10 pr-3 text-[14px] outline-none focus:border-[#4d84ff] focus:ring-2 focus:ring-[#4d84ff]/25 transition placeholder:text-[#5d6880]"
+                    placeholder="Password"
+                  />
+                </div>
+              )}
               {err && <p className="text-[12px] text-rose-400 font-medium px-1">{err}</p>}
-              <Btn type="submit" disabled={busy} className="h-12! w-full text-[14px]! rounded-xl!" icon={busy ? Loader2 : ArrowRight}>
-                {busy ? (mode === 'register' ? 'Creating account…' : 'Signing in…') : (mode === 'register' ? 'Create account' : 'Sign in')}
+              {info && (
+                <p className="text-[12px] text-emerald-400 font-medium px-1 flex items-center gap-1.5">
+                  <MailCheck size={14} /> {info}
+                </p>
+              )}
+              <Btn type="submit" disabled={busy} className="h-12! w-full text-[14px]! rounded-xl!" icon={busy ? Loader2 : (mode === 'forgot' ? Mail : ArrowRight)}>
+                {busy
+                  ? (mode === 'register' ? 'Creating account…' : mode === 'forgot' ? 'Sending link…' : 'Signing in…')
+                  : (mode === 'register' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Sign in')}
               </Btn>
             </form>
 
-            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#4d84ff]/20 bg-[#ffffff0d] p-4 text-[13px] text-[#d2dbff]">
-              <p>{mode === 'login' ? "Don't have an account yet?" : 'Already have an account?'}</p>
-              <button type="button" onClick={() => { setMode((m) => (m === 'login' ? 'register' : 'login')); setErr(''); }}
-                className="rounded-full border border-[#4d84ff] bg-[#4d84ff]/10 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#4d84ff]/20 whitespace-nowrap">
-                {mode === 'login' ? 'Create a new account' : 'Back to sign in'}
-              </button>
-            </div>
+            {mode === 'login' && (
+              <div className="mt-2 flex justify-end">
+                <button type="button" onClick={() => switchMode('forgot')}
+                  className="text-[12.5px] font-medium text-[#8d99b5] hover:text-white transition">
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            {mode === 'forgot' ? (
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#4d84ff]/20 bg-[#ffffff0d] p-4 text-[13px] text-[#d2dbff]">
+                <p>Remember your password?</p>
+                <button type="button" onClick={() => switchMode('login')}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#4d84ff] bg-[#4d84ff]/10 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#4d84ff]/20 whitespace-nowrap">
+                  <ArrowLeft size={14} /> Back to sign in
+                </button>
+              </div>
+            ) : (
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#4d84ff]/20 bg-[#ffffff0d] p-4 text-[13px] text-[#d2dbff]">
+                <p>{mode === 'login' ? "Don't have an account yet?" : 'Already have an account?'}</p>
+                <button type="button" onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
+                  className="rounded-full border border-[#4d84ff] bg-[#4d84ff]/10 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#4d84ff]/20 whitespace-nowrap">
+                  {mode === 'login' ? 'Create a new account' : 'Back to sign in'}
+                </button>
+              </div>
+            )}
 
             <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[11.5px] text-[#8d99b5]">
               {[{ i: ShieldCheck, t: 'Private by default' }, { i: Zap, t: 'Instantly synced' }, { i: Globe2, t: 'Saved to your account' }].map((f) => (
@@ -114,7 +171,7 @@ export default function Login() {
         >
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#4d84ff]">The Momentum ethos</p>
           <p className="mt-3 text-[22px] font-semibold leading-snug tracking-tight">
-            “Discipline compounds. Build the system, and the system builds you.”
+            "Discipline compounds. Build the system, and the system builds you."
           </p>
           <div className="mt-5 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-[#2f6bff] to-[#7c5cff] text-white font-bold text-sm">

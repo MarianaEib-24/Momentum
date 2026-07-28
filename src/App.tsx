@@ -2,6 +2,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { StoreProvider, useStore } from './lib/store';
 import Shell from './components/Shell';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
@@ -25,6 +26,8 @@ function RequireAuth() {
 
 function HomeRedirect() {
   const { me } = useStore();
+  const hash = window.location.hash;
+  if (/[?&]type=recovery/.test(hash)) return <Navigate to="/reset-password" replace />;
   return <Navigate to={me ? '/dashboard' : '/login'} replace />;
 }
 
@@ -35,6 +38,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route element={<RequireAuth />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
