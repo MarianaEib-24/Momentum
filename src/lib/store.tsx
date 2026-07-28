@@ -4,7 +4,7 @@ import type { AppData, User } from './types';
 import { seedData } from '../data/seed';
 import { ACHIEVEMENTS } from './achievements';
 import { nowIso, todayStr, uid } from './utils';
-import { fetchDataApi, getMeApi, importDataApi, loginApi, registerApi, resetWorkspaceApi, saveDataApi } from './api';
+import { fetchDataApi, fetchUsersApi, getMeApi, importDataApi, loginApi, registerApi, resetWorkspaceApi, saveDataApi } from './api';
 
 const TOKEN_KEY = 'momentum:token';
 const THEME_KEY = 'momentum:theme';

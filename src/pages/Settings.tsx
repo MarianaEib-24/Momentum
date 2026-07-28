@@ -31,8 +31,8 @@ export default function Settings() {
 
   const onImport = (file: File) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const ok = importData(String(reader.result ?? ''));
+    reader.onload = async () => {
+      const ok = await importData(String(reader.result ?? ''));
       toast(ok ? 'Workspace restored from backup' : 'That file is not a valid Momentum backup', ok ? 'star' : 'flag');
     };
     reader.readAsText(file);
