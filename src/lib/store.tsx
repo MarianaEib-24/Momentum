@@ -233,34 +233,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
 
-// Achievement engine — watches the workspace, celebrates new unlocks.
-useEffect(() => {
-  const fresh = ACHIEVEMENTS.filter((a) => !data.unlocked.includes(a.id) && a.check(data));
-  if (fresh.length === 0) return;
-  const t = window.setTimeout(() => {
-    setData((prev) => produce(prev, (d) => {
-      for (const a of fresh) {
-        if (d.unlocked.includes(a.id)) continue;
-        d.unlocked.push(a.id);
-        d.notifs.unshift({ id: uid(), icon: a.icon, text: `Achievement unlocked — ${a.title}`, at: nowIso(), read: false, type: 'achievement' });
-      }
-    }));
-    fresh.forEach((a, i) => window.setTimeout(() => toast(`Achievement unlocked — ${a.title}`, a.icon), i * 600));
-    fire();
-  }, 900);
-  return () => window.clearTimeout(t);
-}, [data, toast, fire]);
+// // Achievement engine — watches the workspace, celebrates new unlocks.
+// useEffect(() => {
+//   const fresh = ACHIEVEMENTS.filter((a) => !data.unlocked.includes(a.id) && a.check(data));
+//   if (fresh.length === 0) return;
+//   const t = window.setTimeout(() => {
+//     setData((prev) => produce(prev, (d) => {
+//       for (const a of fresh) {
+//         if (d.unlocked.includes(a.id)) continue;
+//         d.unlocked.push(a.id);
+//         d.notifs.unshift({ id: uid(), icon: a.icon, text: `Achievement unlocked — ${a.title}`, at: nowIso(), read: false, type: 'achievement' });
+//       }
+//     }));
+//     fresh.forEach((a, i) => window.setTimeout(() => toast(`Achievement unlocked — ${a.title}`, a.icon), i * 600));
+//     fire();
+//   }, 900);
+//   return () => window.clearTimeout(t);
+// }, [data, toast, fire]);
 
-const value = useMemo<Ctx>(() => ({
-  data, me,
-  meUser: me ? data.users[me] ?? null : null,
-  partner: me ? data.users[me === 'alex' ? 'jordan' : 'alex'] ?? null : null,
-  theme, setTheme, login, logout, update,
-  toasts, toast, confetti, fire, resetDemo, importData,
-}), [data, me, theme, setTheme, login, logout, update, toasts, toast, confetti, fire, resetDemo, importData]);
+// const value = useMemo<Ctx>(() => ({
+//   data, me,
+//   meUser: me ? data.users[me] ?? null : null,
+//   partner: me ? data.users[me === 'alex' ? 'jordan' : 'alex'] ?? null : null,
+//   theme, setTheme, login, logout, update,
+//   toasts, toast, confetti, fire, resetDemo, importData,
+// }), [data, me, theme, setTheme, login, logout, update, toasts, toast, confetti, fire, resetDemo, importData]);
 
-return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
-}
+// return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
+// }
 
 export function useStore(): Ctx {
   const ctx = useContext(StoreCtx);
