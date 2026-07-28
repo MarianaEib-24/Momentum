@@ -1,21 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { produce } from 'immer';
 import type { AppData, User } from './types';
-import { seedData } from '../data/seed';
 import { ACHIEVEMENTS } from './achievements';
 import { nowIso, todayStr, uid } from './utils';
-import { fetchDataApi, fetchUsersApi, getMeApi, importDataApi, loginApi, registerApi, resetWorkspaceApi, saveDataApi } from './api';
+import { supabase } from './supabase';
+import { fetchWorkspaceApi, importWorkspaceApi, resetWorkspaceApi, saveWorkspaceApi, signInApi, signOutApi, signUpApi } from './api';
 
-const TOKEN_KEY = 'momentum:token';
 const THEME_KEY = 'momentum:theme';
-
-function loadToken(): string | null {
-  try {
-    return localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
 
 function createEmptyData(user: User): AppData {
   return {
@@ -71,10 +62,6 @@ interface Ctx {
 
 const StoreCtx = createContext<Ctx | null>(null);
 
-function loadData(): AppData {
-  return seedData();
-}
-
 function loadTheme(): Theme {
   try {
     const t = localStorage.getItem(THEME_KEY);
@@ -84,32 +71,61 @@ function loadTheme(): Theme {
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(loadData);
+  const [data, setData] = useState<AppData>(() => createEmptyData({ id: '', name: '', email: '', role: '', grad: ['#2f6bff', '#7c5cff'], focus: '' }));
   const [me, setMe] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(() => loadToken());
+  const [authReady, setAuthReady] = useState(false);
   const [theme, setThemeState] = useState<Theme>(loadTheme);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confetti, setConfetti] = useState(0);
 
   useEffect(() => {
-    async function init() {
-      const authToken = loadToken();
-      if (!authToken) return;
-      try {
-        const { user } = await getMeApi(authToken);
-        const payload = await fetchDataApi(authToken);
-        const users = await fetchUsersApi();
-        const usersMap = Object.fromEntries(users.users.map((u) => [u.id, u]));
-        setMe(user.id);
-        setToken(authToken);
-        setData({ ...payload?.data ?? createEmptyData(user), users: usersMap });
-      } catch {
-        setToken(null);
-        setMe(null);
-        try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+    let mounted = true;
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (sessionData.session?.user) {
+        const userId = sessionData.session.user.id;
+        const email = sessionData.session.user.email ?? '';
+        try {
+          const payload = await fetchWorkspaceApi(userId);
+          setMe(userId);
+          if (payload) {
+            setData(payload);
+          } else {
+            setData(createEmptyData({ id: userId, name: email.split('@')[0], email, role: 'Workspace owner', grad: ['#2f6bff', '#7c5cff'], focus: '' }));
+          }
+        } catch {
+          setMe(null);
+        }
       }
-    }
-    init();
+      setAuthReady(true);
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      (async () => {
+        if (!mounted) return;
+        if (event === 'SIGNED_OUT' || !session?.user) {
+          setMe(null);
+          setData(createEmptyData({ id: '', name: '', email: '', role: '', grad: ['#2f6bff', '#7c5cff'], focus: '' }));
+          return;
+        }
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          const userId = session.user.id;
+          const email = session.user.email ?? '';
+          if (me !== userId) {
+            setMe(userId);
+            try {
+              const payload = await fetchWorkspaceApi(userId);
+              if (payload) setData(payload);
+              else setData(createEmptyData({ id: userId, name: email.split('@')[0], email, role: 'Workspace owner', grad: ['#2f6bff', '#7c5cff'], focus: '' }));
+            } catch { /* ignore */ }
+          }
+        }
+      })();
+    });
+
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -128,29 +144,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const fire = useCallback(() => setConfetti((c) => c + 1), []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const result = await loginApi(email, password);
-    const users = await fetchUsersApi();
-    const usersMap = Object.fromEntries(users.users.map((u) => [u.id, u]));
-    setToken(result.token);
+    const result = await signInApi(email, password);
     setMe(result.user.id);
-    try { localStorage.setItem(TOKEN_KEY, result.token); } catch { /* ignore */ }
-    setData({ ...result.data ?? createEmptyData(result.user), users: usersMap });
+    if (result.data) {
+      setData(result.data);
+    } else {
+      setData(createEmptyData({ id: result.user.id, name: result.user.name, email: result.user.email, role: result.user.role, grad: result.user.grad, focus: result.user.focus }));
+    }
   }, []);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
-    const result = await registerApi(name, email, password);
-    const users = await fetchUsersApi();
-    const usersMap = Object.fromEntries(users.users.map((u) => [u.id, u]));
-    setToken(result.token);
+    const result = await signUpApi(name, email, password);
     setMe(result.user.id);
-    try { localStorage.setItem(TOKEN_KEY, result.token); } catch { /* ignore */ }
-    setData({ ...result.data ?? createEmptyData(result.user), users: usersMap });
+    setData(result.data);
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await signOutApi();
     setMe(null);
-    setToken(null);
-    try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+    setData(createEmptyData({ id: '', name: '', email: '', role: '', grad: ['#2f6bff', '#7c5cff'], focus: '' }));
   }, []);
 
   const update = useCallback((fn: (d: AppData) => void, act?: { action: string; target: string }) => {
@@ -162,50 +174,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (d.activity.length > 60) d.activity.length = 60;
         }
       });
-      if (token) {
-        void saveDataApi(token, next).catch(() => {
+      if (me) {
+        void saveWorkspaceApi(me, next).catch(() => {
           toast('Unable to save workspace to the server', 'flag');
         });
       }
       return next;
     });
-  }, [me, token, toast]);
+  }, [me, toast]);
 
   const resetWorkspace = useCallback(async () => {
-    if (token && me) {
-      await resetWorkspaceApi(token);
+    if (me) {
+      await resetWorkspaceApi(me);
       const user = data.users[me] ?? { id: me, name: 'You', email: '', role: '', grad: ['#2f6bff', '#7c5cff'], focus: '' };
       setData(createEmptyData(user));
       toast('Workspace reset on server', 'sparkles');
       return;
     }
-    setData(seedData());
-    toast('Workspace restored to demo data', 'sparkles');
-  }, [data.users, me, token, toast]);
+  }, [data.users, me, toast]);
 
   const importData = useCallback(async (raw: string): Promise<boolean> => {
-    if (token) {
-      const ok = await importDataApi(token, raw).then(() => true).catch(() => false);
+    if (me) {
+      const ok = await importWorkspaceApi(me, raw).then(() => true).catch(() => false);
       if (ok) {
         const parsed = JSON.parse(raw);
         setData({ ...parsed, v: 3 });
       }
       return ok;
     }
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.projects) && Array.isArray(parsed.tasks)) {
-        setData({ ...parsed, v: 3 });
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }, [token]);
+    return false;
+  }, [me]);
 
   // Achievement engine — watches the workspace, celebrates new unlocks.
   useEffect(() => {
+    if (!me) return;
     const fresh = ACHIEVEMENTS.filter((a) => !data.unlocked.includes(a.id) && a.check(data));
     if (fresh.length === 0) return;
     const t = window.setTimeout(() => {
@@ -220,7 +222,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       fire();
     }, 900);
     return () => window.clearTimeout(t);
-  }, [data, toast, fire]);
+  }, [data, me, toast, fire]);
 
   const value = useMemo<Ctx>(() => ({
     data, me,
@@ -230,37 +232,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     toasts, toast, confetti, fire, resetWorkspace, importData,
   }), [data, me, theme, setTheme, login, register, logout, update, toasts, toast, confetti, fire, resetWorkspace, importData]);
 
+  if (!authReady && !me) {
+    return (
+      <div className="min-h-screen bg-[#070b14] flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-[#4d84ff] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
-
-// // Achievement engine — watches the workspace, celebrates new unlocks.
-// useEffect(() => {
-//   const fresh = ACHIEVEMENTS.filter((a) => !data.unlocked.includes(a.id) && a.check(data));
-//   if (fresh.length === 0) return;
-//   const t = window.setTimeout(() => {
-//     setData((prev) => produce(prev, (d) => {
-//       for (const a of fresh) {
-//         if (d.unlocked.includes(a.id)) continue;
-//         d.unlocked.push(a.id);
-//         d.notifs.unshift({ id: uid(), icon: a.icon, text: `Achievement unlocked — ${a.title}`, at: nowIso(), read: false, type: 'achievement' });
-//       }
-//     }));
-//     fresh.forEach((a, i) => window.setTimeout(() => toast(`Achievement unlocked — ${a.title}`, a.icon), i * 600));
-//     fire();
-//   }, 900);
-//   return () => window.clearTimeout(t);
-// }, [data, toast, fire]);
-
-// const value = useMemo<Ctx>(() => ({
-//   data, me,
-//   meUser: me ? data.users[me] ?? null : null,
-//   partner: me ? data.users[me === 'alex' ? 'jordan' : 'alex'] ?? null : null,
-//   theme, setTheme, login, logout, update,
-//   toasts, toast, confetti, fire, resetDemo, importData,
-// }), [data, me, theme, setTheme, login, logout, update, toasts, toast, confetti, fire, resetDemo, importData]);
-
-// return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
-// }
 
 export function useStore(): Ctx {
   const ctx = useContext(StoreCtx);

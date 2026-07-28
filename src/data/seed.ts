@@ -1,5 +1,6 @@
 import type { AppData, Task, TaskStatus, Priority, Assignee, Sub, Comment, ReactionKey } from '../lib/types';
-import { shiftDays, todayStr, recentWeekday, nowIso } from '../lib/utils';
+import type { AuthUser } from '../lib/api';
+import { shiftDays, todayStr, recentWeekday, nowIso, uid } from '../lib/utils';
 
 let tn = 0, cn = 0, sn = 0;
 const T = (t: {
@@ -322,5 +323,87 @@ export function seedData(): AppData {
     unlocked: [],
     widgetPrefs: { quote: true, kpis: true, chart: true, habits: true, deadlines: true, activity: true, achieve: true, notif: true },
     settings: { notif_mentions: true, notif_comments: true, notif_deadlines: true, notif_habits: false, sounds: false, weekly_digest: true },
+  };
+}
+
+export function createSeededData(user: AuthUser): AppData {
+  const t0 = new Date();
+  const iso = (hrsAgo: number) => new Date(t0.getTime() - hrsAgo * 3600000).toISOString();
+  const projectId = `pj${uid()}`;
+
+  return {
+    v: 3,
+    users: {
+      [user.id]: {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        grad: user.grad,
+        focus: user.focus,
+      },
+    },
+    workspace: { name: 'My Workspace', since: todayStr() },
+
+    projects: [
+      {
+        id: projectId, name: 'Welcome to Momentum', tag: 'GETTING STARTED', color: 'blue', icon: 'rocket',
+        desc: 'Your first project. Click into it to add tasks, milestones, and collaborate.',
+        status: 'on-track', visibility: 'personal', ownerId: user.id, members: [],
+        milestones: [
+          { id: `ms${uid()}`, title: 'Explore the dashboard', date: shiftDays(0), done: true },
+          { id: `ms${uid()}`, title: 'Create your first task', date: shiftDays(3), done: false },
+          { id: `ms${uid()}`, title: 'Set a goal', date: shiftDays(7), done: false },
+        ],
+      },
+    ],
+
+    tasks: [
+      {
+        id: `tk${uid()}`, projectId, title: 'Explore the dashboard', status: 'done', priority: 'medium',
+        tags: ['welcome'], assignee: user.id, due: null, doneAt: shiftDays(0),
+        subs: [], comments: [], reactions: {}, attachments: [], createdAt: nowIso(),
+      } as Task,
+    ],
+
+    habits: [
+      { id: `h${uid()}`, name: 'Daily check-in', icon: 'zap', color: 'blue', days: { [todayStr()]: 1 } },
+    ],
+
+    goals: [
+      { id: `g${uid()}`, title: 'Set your first goal', cat: 'Product', color: 'blue', target: 100, current: 10, unit: '%', deadline: shiftDays(30) },
+    ],
+
+    journal: [
+      {
+        id: `j${uid()}`, title: 'Welcome to your journal', date: todayStr(), mood: 'good', tags: ['welcome'],
+        body: '# Welcome to Momentum\n\nThis is your private journal. Write your thoughts, track your progress, and build momentum.\n\n**Try these:**\n- Create a new project\n- Add a habit\n- Set a goal\n- Explore the brainstorm board\n\n*Start small. Stay consistent.*',
+      },
+    ],
+
+    ideas: [
+      { id: `i${uid()}`, text: 'Drag this note around the board!', color: 'gold', x: 10, y: 10, votes: [] },
+      { id: `i${uid()}`, text: 'Double-click to edit any note', color: 'blue', x: 40, y: 20, votes: [] },
+    ],
+
+    plans: [],
+
+    resources: [],
+
+    events: [
+      { id: `e${uid()}`, title: 'Welcome tour', date: shiftDays(0), time: '09:00', kind: 'personal', recur: null, color: 'blue' },
+    ],
+
+    notifs: [
+      { id: `n${uid()}`, icon: 'sparkles', text: 'Welcome to Momentum! Start by creating a project or habit.', at: iso(0), read: false, type: 'system' },
+    ],
+
+    activity: [
+      { id: `ac${uid()}`, actor: user.id, action: 'joined', target: 'Momentum', at: iso(0) },
+    ],
+
+    unlocked: [],
+    widgetPrefs: { quote: true, kpis: true, chart: true, habits: true, deadlines: true, activity: true, achieve: true, notif: true },
+    settings: { notif_mentions: true, notif_comments: true, notif_deadlines: true, notif_habits: true, sounds: true, weekly_digest: true },
   };
 }

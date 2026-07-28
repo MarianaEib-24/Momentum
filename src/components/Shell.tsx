@@ -259,7 +259,7 @@ function UserMenu() {
               </button>
             ))}
             <div className="h-px bg-line my-1" />
-            <button onClick={() => { setOpen(false); logout(); }}
+            <button onClick={() => { setOpen(false); void logout(); }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer">
               <LogOut size={15} /> Sign out
             </button>
@@ -383,7 +383,7 @@ export default function Shell() {
           <Outlet />
         </main>
         <footer className="px-8 pb-6 text-[11px] text-mut/60 flex items-center gap-1.5">
-          <ChevronsRight size={12} /> Momentum · private workspace for two · data lives in your browser · {relTime(data.activity[0]?.at ?? new Date().toISOString())} last activity
+          <ChevronsRight size={12} /> Momentum · your private workspace · data saved to your account · {relTime(data.activity[0]?.at ?? new Date().toISOString())} last activity
         </footer>
       </div>
 

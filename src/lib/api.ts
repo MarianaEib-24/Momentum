@@ -1,90 +1,86 @@
-const BASE = import.meta.env.VITE_API_BASE || '';
-
-async function request(path: string, options: RequestInit = {}) {
-    const res = await fetch(`${BASE}${path}`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers ?? {}),
-        },
-        credentials: 'include',
-        ...options,
-    });
-    const text = await res.text();
-    const body = text ? JSON.parse(text) : null;
-    if (!res.ok) {
-        throw new Error(body?.message || res.statusText || 'Request failed');
-    }
-    return body;
-}
+import { supabase } from './supabase';
+import type { AppData, User } from './types';
+import { createSeededData } from '../data/seed';
 
 export interface AuthUser {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    grad: [string, string];
-    focus: string;
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  grad: [string, string];
+  focus: string;
 }
 
-export interface AuthResult {
-    token: string;
-    user: AuthUser;
-    data: any;
+function userFromAuth(email: string, name?: string): AuthUser {
+  return {
+    id: email,
+    name: name ?? email.split('@')[0],
+    email,
+    role: 'Workspace owner',
+    grad: ['#2f6bff', '#7c5cff'],
+    focus: '',
+  };
 }
 
-export async function loginApi(email: string, password: string) {
-    return request('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-    }) as Promise<AuthResult>;
+export async function signUpApi(name: string, email: string, password: string): Promise<{ user: AuthUser; data: AppData }> {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error('Sign-up failed — no user returned.');
+
+  const authUser = userFromAuth(email, name);
+  const seeded = createSeededData(authUser);
+  await saveWorkspaceApi(data.user.id, seeded);
+  return { user: authUser, data: seeded };
 }
 
-export async function registerApi(name: string, email: string, password: string) {
-    return request('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password }),
-    }) as Promise<AuthResult>;
+export async function signInApi(email: string, password: string): Promise<{ user: AuthUser; data: AppData | null }> {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error('Sign-in failed — no user returned.');
+
+  const authUser = userFromAuth(email);
+  const existing = await fetchWorkspaceApi(data.user.id);
+  return { user: authUser, data: existing };
 }
 
-export async function getMeApi(token: string) {
-    return request('/api/auth/me', {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
-    }) as Promise<{ user: AuthUser }>;
+export async function signOutApi(): Promise<void> {
+  await supabase.auth.signOut();
 }
 
-export async function fetchDataApi(token: string) {
-    return request('/api/data', {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
-    }) as Promise<any>;
+export async function getSessionUser(): Promise<AuthUser | null> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session?.user) return null;
+  return userFromAuth(data.session.user.email ?? '');
 }
 
-export async function saveDataApi(token: string, data: any) {
-    return request('/api/data', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify(data),
-    });
+export async function fetchWorkspaceApi(userId: string): Promise<AppData | null> {
+  const { data, error } = await supabase
+    .from('workspaces')
+    .select('payload')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.payload as AppData | null) ?? null;
 }
 
-export async function importDataApi(token: string, raw: string) {
-    return request('/api/data/import', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: raw,
-    });
+export async function saveWorkspaceApi(userId: string, payload: AppData): Promise<void> {
+  const { error } = await supabase
+    .from('workspaces')
+    .upsert({ user_id: userId, payload, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+  if (error) throw new Error(error.message);
 }
 
-export async function resetWorkspaceApi(token: string) {
-    return request('/api/data/reset', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-    });
+export async function resetWorkspaceApi(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('workspaces')
+    .delete()
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message);
 }
 
-export async function fetchUsersApi() {
-    return request('/api/auth/users', {
-        method: 'GET',
-    }) as Promise<{ users: AuthUser[] }>;
+export async function importWorkspaceApi(userId: string, raw: string): Promise<void> {
+  const parsed = JSON.parse(raw);
+  await saveWorkspaceApi(userId, parsed);
 }
+
+export type { User };

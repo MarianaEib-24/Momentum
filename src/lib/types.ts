@@ -3,7 +3,7 @@ export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'todo' | 'active' | 'review' | 'done';
 export type ReactionKey = 'flame' | 'thumbs' | 'bulb' | 'target' | 'heart';
 export type Mood = 'great' | 'good' | 'ok' | 'low';
-export type Assignee = 'alex' | 'jordan' | 'both';
+export type Assignee = string | 'both';
 
 export interface User {
   id: UID;

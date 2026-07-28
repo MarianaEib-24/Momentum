@@ -63,7 +63,7 @@ export default function Profile() {
               ) : (
                 <Btn variant="ghost" icon={Pencil} onClick={startEdit}>Edit profile</Btn>
               )}
-              <Btn variant="danger" icon={LogOut} onClick={() => { logout(); nav('/login'); }}>Sign out</Btn>
+              <Btn variant="danger" icon={LogOut} onClick={() => { void logout(); nav('/login'); }}>Sign out</Btn>
             </div>
           </div>
           <div className="px-6 pb-5 flex items-center gap-4 text-[12px] text-mut">
